@@ -1,27 +1,28 @@
 #![allow(dead_code, unused_variables)]
 
-use std::{future::Future, io::BufRead, sync::{Arc, Mutex}};
+use std::{
+    future::Future,
+    io::BufRead,
+    sync::{Arc, Mutex},
+};
 
-mod tokio {
-    pub async fn spawn(_: impl Future) {}
-}
+fn main() {
+    let runtime = tokio::runtime::Runtime::new().unwrap();
+    runtime.block_on(async {
+        println!("Hello, world!");
 
-#[tokio::main]
-async fn main() {
-    let x = Arc::new(Mutex::new(0));
-    let x1 = Arc::clone(&x);
-    tokio::spawn(async move {
-        loop {
-            *x1.lock() += 1;
-        }
-    });
-
-    let x2 = Arc::clone(&x);
-    tokio::spawn(async move {
-        loop {
-            *x2.lock() -= 1;
-        }
+        // await means don't run the following lists of of instructions until foo1 actually resolved
+        // into its output type
+        let x = foo1().await;
+        println!("foo2");
     });
 }
 
+async fn foo1() -> usize {
+    println!("foo1");
+    0
+}
 
+fn foo2() -> impl Future<Output = usize> {
+    async { 0 }
+}

@@ -1,25 +1,27 @@
 #![allow(dead_code, unused_variables)]
 
-use std::{future::Future, io::BufRead};
+use std::{future::Future, io::BufRead, sync::{Arc, Mutex}};
 
-fn main() {}
-
-struct Request;
-
-struct Response;
-
-trait Service {
-    type CallFuture: Future<Output = Response>;
-    fn call(&mut self, _: Request) -> Self::CallFuture;
+mod tokio {
+    pub async fn spawn(_: impl Future) {}
 }
 
-struct X;
+#[tokio::main]
+async fn main() {
+    let x = Arc::new(Mutex::new(0));
+    let x1 = Arc::clone(&x);
+    tokio::spawn(async move {
+        loop {
+            *x1.lock() += 1;
+        }
+    });
 
-impl Service for X {
-    type CallFuture = Pin<Box<dyn Future<Output = Response>>>;
-
-    fn call(&mut self, _: Request) -> Self::CallFuture {
-        async { Response }
-    }
+    let x2 = Arc::clone(&x);
+    tokio::spawn(async move {
+        loop {
+            *x2.lock() -= 1;
+        }
+    });
 }
+
 

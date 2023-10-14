@@ -4,26 +4,22 @@ use std::{future::Future, io::BufRead};
 
 fn main() {}
 
-enum StateMachine {
-    Chunk1 {
-        x: [u8; 1024],
-        fut: tokio::fs::ReadIntoFuture<'x>,
-    },
-    Chunk2 {},
+struct Request;
+
+struct Response;
+
+trait Service {
+    type CallFuture: Future<Output = Response>;
+    fn call(&mut self, _: Request) -> Self::CallFuture;
 }
 
-async fn foo() {
-    // chunk1
-    {
-        let mut x = [0; 1024];
-        let fut = tokio::fs::read_into("file.dat", &mut x[..]);
-    }
+struct X;
 
-    // fut.await
-    yield; // really return;
+impl Service for X {
+    type CallFuture = Pin<Box<dyn Future<Output = Response>>>;
 
-    {
-        let n = fut.output();
-        println!("{:?}", x[..n]);
+    fn call(&mut self, _: Request) -> Self::CallFuture {
+        async { Response }
     }
 }
+

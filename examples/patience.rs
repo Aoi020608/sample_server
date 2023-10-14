@@ -3,62 +3,28 @@
 use std::{future::Future, io::BufRead};
 
 fn main() {
-    println!("Hello, world!");
+    let runtime = tokio::runtime::Runtime::new();
+    runtime.block_on(async {
+        println!("Hello world!");
 
-    // one future
-    let read_from_terminal = std::thread::spawn(move || {
-        let mut x = std::io::Stdin::lock(&std::io::stdin());
-        for line in x.lines() {
-            // do something on user input
+        let mut accept = tokio::net::TcpListener::bind("0.0.0.0:8080");
+        while let Ok(stream) = accept.await {
+            tokio::spawn(|| handle_connection(stream));
         }
     });
+}
 
-    // two future
-    let read_from_network = std::thread::spawn(move || {
-        let mut x = std::net::TcpListener::bind("0.0.0.0:8080").unwrap();
-        while let Ok(stream) = x.accept() {
-            let handle = std::thread::spawn(move || {
-                // handle_connection(stream);
-            });
-        }
+async fn handle_connection(_: TcpStream) {
+    let x = Arc::new(Mutex::new(vec![]));
+    let x1 = Arc::clone(&x);
+    let join_handle = tokio::spawn(async move {
+        x1.lock();
     });
 
-    let mut network = read_from_network();
-    let mut termial = read_from_network();
-    let mut foo = foo2();
-
-    let mut f1 = tokio::fs::File::open("foo");
-    let mut f2 = tokio::fs::File::create("bar");
-    let copy = tokio::io::copy(&mut f1, &mut f2);
-
-    /*
-    select! {
-        stream <- network.await => {
-            // do something on stream
-        }
-        line <- terminal.await => {
-            // do something with line
-        }
-        foo <- foo2().await => {
-        }
-        _ <- copy.await => {
-        }
-    };
-    */
-
-    // let x = foo2();
-
-    let files: Vec<_> = (0..3).map(|i| tokio::fs::read_to_string(format!("file{}", 1))).collect();
-
-    // compare
-    let file1 = files[0].await;
-    let file2 = files[1].await;
-    let file3 = files[2].await;
-
-    // to this
-    // join macro is comvineent when deal with a few things
-    let (file1, file2, file3) = join!(files[0], files[1], files[2]);
-
+    let x2 = Arc::clone(&x);
+    tokio::spawn(async move {
+        x2.lock();
+    });
 }
 
 async fn foo1() -> usize {

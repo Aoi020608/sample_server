@@ -2,32 +2,31 @@
 
 use std::{
     future::Future,
-    io::BufRead,
+    io::{self, BufRead},
     sync::{Arc, Mutex},
 };
 
 use tokio::net::TcpListener;
 
-fn main() {
-    let runtime = tokio::runtime::Runtime::new().unwrap();
-    runtime.block_on(async {
-        println!("Hello, world");
+#[tokio::main]
+async fn main() -> io::Result<()> {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
 
-        let mut accept = tokio::net::TcpListener::bind("0.0.0.0:8080");
-        let mut connections = futures::future::FuturesUnordered::new();
-        loop {
-            tokio::select! {
-                stream = accept => {
-                    if let Ok(st) = stream {
-                        connections.push(handle_connection(st));
-                    }
-                }
-                _ = (&mut connections).await => {}
-            }
-        }
-    });
+    while let Ok((stream, _)) = listener.accept().await {
+        tokio::spawn(handle_connection(stream));
+    }
+
+    Ok(())
 }
 
-async fn handle_connection(_: TcpListener) {
-    todo!()
+async fn handle_connection<T>(socket: T) {
+    let x: Vec<u8> = vec![1, 2];
+    tokio::spawn(async move {
+        //
+        let y: &Vec<_> = &x;
+        todo!()
+    });
+
+    // illegal
+    // println!("{:?}", x);
 }

@@ -5,5 +5,13 @@
 ### Tokio
 - executor crate
 
+#### `tokio::spawn` 
+- gives the future it is passed to the executor whenever it wishes concurrently with other futures.
+
+#### `thread::spawn` 
+- spawns a new operating system thread that will run in parallel with everything else in your program and is outside of the executor's control 
+- does not take a future it takes a closure so 
+
 ## REFERENCES
-- https://www.youtube.com/watch?v=ThjvMReOXYM
+- [Crust of Rust: async/await](https://www.youtube.com/watch?v=ThjvMReOXYM)
+

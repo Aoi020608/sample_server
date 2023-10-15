@@ -7,17 +7,16 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Mutex as TMutex};
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-
     let x = Arc::new(Mutex::new(0));
     let x1 = Arc::clone(&x);
     tokio::spawn(async move {
         loop {
-            let x = x1.lock();
-            tokio::fs::read_to_string("file").await;
+            // let x = x1.lock();
+            // tokio::fs::read_to_string("file").await;
 
             *x1.lock().unwrap() += 1;
         }
@@ -26,16 +25,14 @@ async fn main() -> io::Result<()> {
     let x2 = Arc::clone(&x);
     tokio::spawn(async move {
         loop {
-            let x = x2.lock();
-            tokio::fs::read_to_string("file").await;
+            // let x = x2.lock();
+            // tokio::fs::read_to_string("file").await;
 
             *x2.lock().unwrap() += 1;
         }
     });
-    
 
     Ok(())
-
 }
 
 async fn handle_connection<T>(socket: T) {

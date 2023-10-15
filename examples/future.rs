@@ -45,6 +45,8 @@ impl Executor {
     fn run_all(&mut self, futures: Vec<Future>) -> Vec<(usize, Result<Future::Item, Future::Error>)> {
         let mut done = 0;
         let mut results = Vec::with_capacity(futures.len());
+        let mut tasks = Vec::new();
+
         while done != futures.len() {
             for (i, f) in futures.iter_mut().enumerate() {
                 match f.poll() {
@@ -52,16 +54,20 @@ impl Executor {
                         // done
                         results.push((i, Ok(t)));
                     }
-                    Ok(Async::NotReady) => {
-                        // poll again
-                        continue;
-                    }
                     Err(e) => {
                         results.push((i, Err(e)));
                         done += 1
                     }
+                    Ok(Async::NotReady) => {
+                        // poll again
+                        // meanwhile....
+                        // T noticees that a network packet arrived
+                        continue;
+                    }
                 }
             }
+
+            // wait for Task::notify to be called
         }
 
         results

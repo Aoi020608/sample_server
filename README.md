@@ -13,5 +13,10 @@
 - does not take a future it takes a closure so 
 
 ## REFERENCES
+
+examples/patience.rs
 - [Crust of Rust: async/await](https://www.youtube.com/watch?v=ThjvMReOXYM)
+
+examples/future.rs
+- https://www.youtube.com/watch?v=9_3krAQtD2k
 

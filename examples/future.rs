@@ -33,8 +33,38 @@ fn main() {
     let x = a.run(fut_x);
     let y = a.run(fut_y);
 
-    a.spawn(fut_x.and_then(|eq| assert!(eq)));
-    a.spawn(fut_y.and_then(|eq| assert!(eq)));
-    a.block_on_all();
+
+    let xy = a.run_all(vec![fut_x, fut_y]);
     */
 }
+
+/*
+struct Executor;
+
+impl Executor {
+    fn run_all(&mut self, futures: Vec<Future>) -> Vec<(usize, Result<Future::Item, Future::Error>)> {
+        let mut done = 0;
+        let mut results = Vec::with_capacity(futures.len());
+        while done != futures.len() {
+            for (i, f) in futures.iter_mut().enumerate() {
+                match f.poll() {
+                    Ok(Async::Ready(t)) => {
+                        // done
+                        results.push((i, Ok(t)));
+                    }
+                    Ok(Async::NotReady) => {
+                        // poll again
+                        continue;
+                    }
+                    Err(e) => {
+                        results.push((i, Err(e)));
+                        done += 1
+                    }
+                }
+            }
+        }
+
+        results
+    }
+}
+*/

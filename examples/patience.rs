@@ -3,6 +3,7 @@
 use std::{
     future::Future,
     io::{self, BufRead},
+    pin::Pin,
     sync::{Arc, Mutex},
 };
 
@@ -29,4 +30,22 @@ async fn handle_connection<T>(socket: T) {
 
     // illegal
     // println!("{:?}", x);
+}
+
+struct Request;
+struct Response;
+
+trait Service {
+    type CallFuture: Future<Output = Response>;
+
+    fn call(&mut self, _: Request) -> Self::CallFuture;
+}
+
+struct X;
+
+impl Service for X {
+    type CallFuture = Pin<Box<dyn Future<Output = Response>>>;
+    fn call(&mut self, _: Request) -> Self::CallFuture {
+        Box::pin(async move { Response })
+    }
 }

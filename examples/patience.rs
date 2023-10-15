@@ -11,13 +11,31 @@ use tokio::net::TcpListener;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
 
-    while let Ok((stream, _)) = listener.accept().await {
-        tokio::spawn(handle_connection(stream));
-    }
+    let x = Arc::new(Mutex::new(0));
+    let x1 = Arc::clone(&x);
+    tokio::spawn(async move {
+        loop {
+            let x = x1.lock();
+            tokio::fs::read_to_string("file").await;
+
+            *x1.lock().unwrap() += 1;
+        }
+    });
+
+    let x2 = Arc::clone(&x);
+    tokio::spawn(async move {
+        loop {
+            let x = x2.lock();
+            tokio::fs::read_to_string("file").await;
+
+            *x2.lock().unwrap() += 1;
+        }
+    });
+    
 
     Ok(())
+
 }
 
 async fn handle_connection<T>(socket: T) {

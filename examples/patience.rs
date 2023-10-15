@@ -6,55 +6,28 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+use tokio::net::TcpListener;
 
 fn main() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
-        println!("Hello, world!");
+        println!("Hello, world");
 
-        /*
-        let mut network = read_from_network();
-        let mut termial = read_from_termianl();
-        let mut foo = foo2();
-
-        let mut f1 = tokio::fs::File::open("foo");
-        let mut f2 = tokio::fs::File::open("bar");
-        let copy = tokio::io::copy(&mut f1, &mut f2);
-
-        select! {
-            stream <- (&mut network).await => {
-                // do something
+        let mut accept = tokio::net::TcpListener::bind("0.0.0.0:8080");
+        let mut connections = futures::future::FuturesUnordered::new();
+        loop {
+            tokio::select! {
+                stream = accept => {
+                    if let Ok(st) = stream {
+                        connections.push(handle_connection(st));
+                    }
+                }
+                _ = (&mut connections).await => {}
             }
-            line <- (&mut terminal).await => {
-                // do something with line
-                break;
-            }
-            foo <- (&mut foo).await => {}
-
         }
-
-        // await means don't run the following lists of of instructions until foo1 actually resolved
-        // into its output type
-        let x = foo1().await;
-        println!("foo2");
-        */
-
-        // handle concurrently on one thread
-        let files: Vec<_> = (0..3)
-            .map(|i| tokio::fs::read_to_string(format!("file{}", i)))
-            .collect();
-
-        let results: Vec<_> = try_join_all!(files).await;        // let file2 = files[2].await;
-        
-        let file1 = &results[1];
     });
 }
 
-async fn foo1() -> usize {
-    println!("foo1");
-    0
-}
-
-fn foo2() -> impl Future<Output = usize> {
-    async { 0 }
+async fn handle_connection(_: TcpListener) {
+    todo!()
 }

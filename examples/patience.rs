@@ -6,11 +6,13 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+
 fn main() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         println!("Hello, world!");
 
+        /*
         let mut network = read_from_network();
         let mut termial = read_from_termianl();
         let mut foo = foo2();
@@ -28,13 +30,23 @@ fn main() {
                 break;
             }
             foo <- (&mut foo).await => {}
-            
+
         }
 
         // await means don't run the following lists of of instructions until foo1 actually resolved
         // into its output type
         let x = foo1().await;
         println!("foo2");
+        */
+
+        // handle concurrently on one thread
+        let files: Vec<_> = (0..3)
+            .map(|i| tokio::fs::read_to_string(format!("file{}", i)))
+            .collect();
+
+        let results: Vec<_> = try_join_all!(files).await;        // let file2 = files[2].await;
+        
+        let file1 = &results[1];
     });
 }
 

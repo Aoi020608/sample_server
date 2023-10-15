@@ -64,3 +64,7 @@ impl Service for X {
         Box::pin(async move { Response })
     }
 }
+
+async fn foo() {
+    tokio::spawn(async { panic!() });
+}

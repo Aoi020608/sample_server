@@ -46,9 +46,18 @@ impl Executor {
         let mut done = 0;
         let mut results = Vec::with_capacity(futures.len());
         let mut tasks = Vec::new();
+        for _  in 0..futures.len() {
+            tasks.push(Task::new());
+        }
 
         while done != futures.len() {
             for (i, f) in futures.iter_mut().enumerate() {
+                // don't poll futures that can't make progress
+                if !tasks[i].notified() {
+                    continue;
+                }
+
+                task::set_current(tasks[i].clone());
                 match f.poll() {
                     Ok(Async::Ready(t)) => {
                         // done
@@ -59,9 +68,7 @@ impl Executor {
                         done += 1
                     }
                     Ok(Async::NotReady) => {
-                        // poll again
-                        // meanwhile....
-                        // T noticees that a network packet arrived
+                        // f *must* have arranged for tasks[i] (its task) to be notified later
                         continue;
                     }
                 }

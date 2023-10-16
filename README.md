@@ -2,7 +2,11 @@
 
 ## Libraries
 
-### Tokio
+### futures
+- general interface how to deal with asynchronous computation, interface for tasks, norifier, wake ups, executor.  
+- it doesn't really define any implementations
+
+### tokio
 - executor crate
 
 #### `tokio::spawn` 

@@ -20,3 +20,5 @@ examples/patience.rs
 examples/future.rs
 - https://www.youtube.com/watch?v=9_3krAQtD2k
 
+blog
+- https://without.boats/blog/why-async-rust/

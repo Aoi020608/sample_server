@@ -1,4 +1,9 @@
-use std::{future::Future, net::TcpStream, task::Poll, time::{Instant, Duration}};
+use std::{
+    future::Future,
+    net::TcpStream,
+    task::Poll,
+    time::{Duration, Instant}, pin::Pin,
+};
 
 #[tokio::main]
 async fn main() {
@@ -55,7 +60,6 @@ async fn main() {
     let out = future.await;
     assert_eq!(out, "done");
 }
-
 
 /*
 struct Executor<F: Future>(Arc<Mutex<Vec<bool>>>, Vec<F>;
@@ -201,4 +205,39 @@ enum MainFuture {
     State0,
     State1(Delay),
     Terminated,
+}
+
+impl Future for MainFuture {
+    type Output = ();
+
+    fn poll(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> Poll<Self::Output> {
+        loop {
+            match *self {
+                MainFuture::State0 => {
+                    let when = Instant::now() + Duration::from_millis(10);
+                    let future = Delay { when };
+                    *self = MainFuture::State1(future);
+                }
+                MainFuture::State1(ref mut my_future) => {
+                    match Pin::new(my_future).poll(cx) {
+                        Poll::Ready(out) => {
+                            assert_eq!(out, "done");
+                            *self = MainFuture::Terminated;
+                            return Poll::Ready(());
+                        }
+                        Poll::Pending => {
+                            return Poll::Pending;
+                        }
+                    }
+
+                }
+                MainFuture::Terminated => {
+                    panic!("future polled after completion")
+                }
+            }
+        }
+    }
 }

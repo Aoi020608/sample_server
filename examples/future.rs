@@ -95,25 +95,34 @@ impl Future for Foo {
     type Error = ();
 
     fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
-        match self.fd.read() {
-            Ok(r) => {
-                eprintln!("got {} bytes", r.len());
-            }
-            Err(io::Error::WouldBlock) => {
-                // do something to make sure we are waken up
-                let reacotor = Handle::current();
-                reactor.register(self.fd, Operation::Read, task::current());
-                return Ok(Async::NotReady);
-            }
-            Err(io::Error::Closed) => {
-                return Ok(Async::Ready);
-            }
-            Err(e) => {
-                return Err(e);
-            }
+        loop {
+            match self.fd.read() {
+                Ok(r) => {
+                    eprintln!("got {} bytes", r.len());
+                }
+                Err(io::Error::WouldBlock) => {
+                    // do something to make sure we are waken up
+                    let reacotor = Handle::current();
+                    match PollEvented::new_with_handle(self.fd, reactor).poll_read_ready() {
+                        Ok(Async::Ready(_)) => {
+                            // socket became ready between when we read an called
+                            // poll_ready_ready()
+                            continue;
+                        },
+                        Ok(Async::NotReady() => return Ok(Async::NotReady),
+                        Err(e_ => return Err(e),
+                    }
+                    return Ok(Async::NotReady);
+                }
+                Err(io::Error::Closed) => {
+                    return Ok(Async::Ready);
+                }
+                Err(e) => {
+                    return Err(e);
+                }
 
+            }
         }
-
     }
 }
 */

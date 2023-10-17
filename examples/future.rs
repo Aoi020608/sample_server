@@ -81,3 +81,64 @@ impl Executor {
     }
 }
 */
+
+/*
+struct Foo {
+    // But with O_NONBLOCKING set
+    fd: std::net::TcpStream,
+}
+*/
+
+/*
+impl Future for Foo {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Result<Async<Self::Item>, Self::Error> {
+        match self.fd.read() {
+            Ok(r) => {
+                eprintln!("got {} bytes", r.len());
+            }
+            Err(io::Error::WouldBlock) => {
+                // do something to make sure we are waken up
+                let reacotor = Handle::current();
+                reactor.register(self.fd, Operation::Read, task::current());
+                return Ok(Async::NotReady);
+            }
+            Err(io::Error::Closed) => {
+                return Ok(Async::Ready);
+            }
+            Err(e) => {
+                return Err(e);
+            }
+
+        }
+
+    }
+}
+*/
+
+/*
+enum Operaiton {
+    Read,
+    Write,
+}
+*/
+
+/*
+fn reactor_thread(notify_me: mpsc::Receiver<(Task, FD, Operation)> {
+    let waiting_for: HashMap<(FD, Operation), Task>;
+
+    loop {
+        // accept new things to watch for
+        while let Some((task, fd, op)) = notify_me.try_recv() {
+            waiting_for.insert((fd, op), task);
+        }
+
+        let select = waiting_for.keys().collect();
+        for (fd, op) in epoll(select) {
+            waiting_for.remove((fd, op)).notify();
+        }
+    }
+}
+*/

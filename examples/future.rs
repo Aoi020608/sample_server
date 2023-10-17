@@ -42,7 +42,7 @@ fn main() {
 struct Executor;
 
 impl Executor {
-    fn run_all(&mut self, futures: Vec<Future>) -> Vec<(usize, Result<Future::Item, Future::Error>)> {
+    fn run_all<F>(&mut self, futures: Vec<F>) -> Vec<(usize, Result<F::Item, F::Error>)> where F: Future {
         let mut done = 0;
         let mut results = Vec::with_capacity(futures.len());
         let mut tasks = Vec::new();

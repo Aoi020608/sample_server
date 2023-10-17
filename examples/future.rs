@@ -1,8 +1,9 @@
 use std::{
     future::Future,
     net::TcpStream,
+    pin::Pin,
     task::Poll,
-    time::{Duration, Instant}, pin::Pin,
+    time::{Duration, Instant},
 };
 
 #[tokio::main]
@@ -221,19 +222,16 @@ impl Future for MainFuture {
                     let future = Delay { when };
                     *self = MainFuture::State1(future);
                 }
-                MainFuture::State1(ref mut my_future) => {
-                    match Pin::new(my_future).poll(cx) {
-                        Poll::Ready(out) => {
-                            assert_eq!(out, "done");
-                            *self = MainFuture::Terminated;
-                            return Poll::Ready(());
-                        }
-                        Poll::Pending => {
-                            return Poll::Pending;
-                        }
+                MainFuture::State1(ref mut my_future) => match Pin::new(my_future).poll(cx) {
+                    Poll::Ready(out) => {
+                        assert_eq!(out, "done");
+                        *self = MainFuture::Terminated;
+                        return Poll::Ready(());
                     }
-
-                }
+                    Poll::Pending => {
+                        return Poll::Pending;
+                    }
+                },
                 MainFuture::Terminated => {
                     panic!("future polled after completion")
                 }

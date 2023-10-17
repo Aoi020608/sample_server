@@ -1,6 +1,7 @@
-use std::net::TcpStream;
+use std::{future::Future, net::TcpStream, task::Poll, time::{Instant, Duration}};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     /*
     let x = TcpStream::connect("127.0.0.1").unwrap();
     let y = TcpStream::connect("127.0.0.1").unwrap();
@@ -26,6 +27,17 @@ fn main() {
         .and_then(|(c, b)| b == "barfoo");
     println!("{:?}", fut);
 
+    a.spawn(fut_x);
+
+    let server = TcpListener::new("127.0.0.1:1234")
+        .incoming()
+        .for_each(|s: TcpStream| {
+            // tokio::spawn(fut) => tokio::executor::Handle::current().spawn(fut);
+            // tokio::spawn(fut) => tokio::runtime::Handle::current().spawn(fut);
+
+            tokio::spawn(ClientConnection::new(s))
+        });
+
     */
 
     /*
@@ -36,16 +48,29 @@ fn main() {
 
     let xy = a.run_all(vec![fut_x, fut_y]);
     */
+
+    let when = Instant::now() + Duration::from_millis(10);
+    let future = Delay { when };
+
+    let out = future.await;
+    assert_eq!(out, "done");
 }
 
+
 /*
-struct Executor;
+struct Executor<F: Future>(Arc<Mutex<Vec<bool>>>, Vec<F>;
 
 impl Executor {
+    fn spawn<F>(&mut self, fut: F) where F: Future {
+        self.1.push(fut);
+    }
+
     fn run_all<F>(&mut self, futures: Vec<F>) -> Vec<(usize, Result<F::Item, F::Error>)> where F: Future {
         let mut done = 0;
         let mut results = Vec::with_capacity(futures.len());
         let mut tasks = Vec::new();
+        let waiting_for: HashMap<(FD, Operation), Task>;
+
         for _  in 0..futures.len() {
             tasks.push(Task::new());
         }
@@ -75,6 +100,10 @@ impl Executor {
             }
 
             // wait for Task::notify to be called
+            let select = waiting_for.keys().collect();
+            for (fd, op) in epoll(select) {
+                waiting_for.remove((fd, op)).notify();
+            }
         }
 
         results
@@ -83,14 +112,14 @@ impl Executor {
 */
 
 /*
-struct Foo {
+struct PrintBytesRead {
     // But with O_NONBLOCKING set
     fd: std::net::TcpStream,
 }
 */
 
 /*
-impl Future for Foo {
+impl Future for PrintBytesRead {
     type Item = ();
     type Error = ();
 
@@ -136,7 +165,6 @@ enum Operaiton {
 
 /*
 fn reactor_thread(notify_me: mpsc::Receiver<(Task, FD, Operation)> {
-    let waiting_for: HashMap<(FD, Operation), Task>;
 
     loop {
         // accept new things to watch for
@@ -144,10 +172,33 @@ fn reactor_thread(notify_me: mpsc::Receiver<(Task, FD, Operation)> {
             waiting_for.insert((fd, op), task);
         }
 
-        let select = waiting_for.keys().collect();
-        for (fd, op) in epoll(select) {
-            waiting_for.remove((fd, op)).notify();
-        }
     }
 }
 */
+
+struct Delay {
+    when: Instant,
+}
+
+impl Future for Delay {
+    type Output = &'static str;
+
+    fn poll(
+        self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        if Instant::now() >= self.when {
+            println!("Hello world");
+            Poll::Ready("done")
+        } else {
+            cx.waker().wake_by_ref();
+            Poll::Pending
+        }
+    }
+}
+
+enum MainFuture {
+    State0,
+    State1(Delay),
+    Terminated,
+}

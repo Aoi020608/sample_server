@@ -1,4 +1,11 @@
-use std::{collections::VecDeque, future::Future, pin::Pin, task::{Context, Poll}, time::{Instant, Duration}};
+use std::{
+    collections::VecDeque,
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll},
+    thread,
+    time::{Duration, Instant},
+};
 
 use futures::task;
 
@@ -41,6 +48,8 @@ impl MiniTokio {
         let waker = task::noop_waker();
         let mut cx = Context::from_waker(&waker);
 
+        // executor never goes to sleep
+        // continuously loops all spawned futures and polls them
         while let Some(mut task) = self.tasks.pop_front() {
             if task.as_mut().poll(&mut cx).is_pending() {
                 self.tasks.push_back(task);
@@ -64,7 +73,20 @@ impl Future for Delay {
             println!("Hello world");
             Poll::Ready("done")
         } else {
-            cx.waker().wake_by_ref();
+            // Get a handle to the waker for the current task
+            let waker = cx.waker().clone();
+            let when = self.when;
+
+            // Spawn a timer therad
+            thread::spawn(move || {
+                let now = Instant::now();
+
+                if now < when {
+                    thread::sleep(when - now);
+                }
+                waker.wake();
+            });
+
             Poll::Pending
         }
     }

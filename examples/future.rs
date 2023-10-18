@@ -280,4 +280,37 @@ impl Future for MainFuture {
     }
 }
 
+/*
+struct Pin<P>(ptr: P);
+
+impl<P, T> Deref for Pin<P> where P::Target: T {
+    type Target = P::Deref;
+
+    fn deref(&self) -> &Self::Target {
+        &*self.ptr
+    }
+}
+
+impl<P, T> DerefMut for Pin<P> where P::Target: T, T: Unpin {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut *self.ptr
+    }
+}
+
+impl<P, T> Pin<P> {
+    unsafe fn unsafe_as_mut(&mut self) -> &mut P::Target where P: DerefMut {
+        &mut *self.ptr
+    }
+}
+
+impl !Unpin for MyType {}
+
+/// If T: Unpin, it it not sensitive to being moved
+trait Unpin {}
+
+fn bar<T>(x: Pin<>&mut T) {
+    // EITHER T will never move again
+    // OR T: Unpin
+}
+*/
 

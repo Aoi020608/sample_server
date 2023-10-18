@@ -312,5 +312,18 @@ fn bar<T>(x: Pin<>&mut T) {
     // EITHER T will never move again
     // OR T: Unpin
 }
+
+// in std::pin
+struct Pinned; (similar to PhantomData)
+impl !Unpin for Pinned {}
+
+
+struct Foo {
+    data: [u8; 1024],
+    half: &[u8], // into self.data!
+    half: *const u8, // manage ourselves
+    _notunpin: Pinned,
+}
+impl !Unpin for Foo {} // requires nightly!
 */
 

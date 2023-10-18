@@ -22,8 +22,8 @@ impl WebsiteHandler {
                     println!("Directory Traversal Attacl Attempted: {}", file_path);
                     None
                 }
-            }, 
-            Err(_) => None
+            }
+            Err(_) => None,
         }
     }
 }

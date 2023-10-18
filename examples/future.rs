@@ -32,7 +32,7 @@ async fn main() {
 
 
     enum CompilerMadeAsyncBlock {
-        Step0(Vec<bool>),         
+        Step0(Vec<bool>),
         Step1{
             z: Vec<bool>,
             waiting_on: impl Future<Output = Step2>,
@@ -51,7 +51,7 @@ async fn main() {
     let bar = vec![true];
     let fut_x = async {
         let c = await! { TcpStream::connect("127.0.0.1") };
-        await! { c.write("foobar"); 
+        await! { c.write("foobar");
 
         // let b = await! { c.read() };
         let b = loop {
@@ -325,5 +325,5 @@ struct Foo {
     _notunpin: Pinned,
 }
 impl !Unpin for Foo {} // requires nightly!
-*/
 
+*/

@@ -24,5 +24,8 @@ examples/patience.rs
 examples/future.rs
 - https://www.youtube.com/watch?v=9_3krAQtD2k
 
+examples/mini_tokio.rs
+- https://github.com/tokio-rs/website/blob/master/tutorial-code/mini-tokio/src/main.rs
+
 blog
 - https://without.boats/blog/why-async-rust/

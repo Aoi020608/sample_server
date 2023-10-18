@@ -20,12 +20,52 @@ async fn main() {
     */
 
     /*
-    future
+    let buf = String::new("foobar");
     let fut_x = TcpStream::connect("127.0.0.1")
         .and_then(|c| c.write("foobar"))
         .and_then(|c| c.read())
         .and_then(|(c, b)| b == "barfoo");
+
     println!("{:?}", fut);
+    let x = tokio::run(fut_x);
+    println!("{}", buf);
+
+
+    enum CompilerMadeAsyncBlock {
+        Step0(Vec<bool>),         
+        Step1{
+            z: Vec<bool>,
+            waiting_on: impl Future<Output = Step2>,
+        }
+        Step2 {
+            c: TcpStream,
+            // future returned from c.write()
+            waiting_on: impl Future<Output = usize>,
+        }
+    }
+
+    impl Future for CompilerMadeAsyncBlock {
+
+    }
+
+    let bar = vec![true];
+    let fut_x = async {
+        let c = await! { TcpStream::connect("127.0.0.1") };
+        await! { c.write("foobar"); 
+
+        // let b = await! { c.read() };
+        let b = loop {
+            match c.read() {
+                Async::Ready(x) => break x,
+                Async::NotReady => {
+                    // return Async::NotReady <- not really
+                    yield; <- continue from here on re-entry()
+                },
+            }
+        };
+
+        b == "barfoo"
+    };
 
     let fut_y = TcpStream::connect("127.0.0.1")
         .and_then(|c| c.write("foobar"))
@@ -239,3 +279,5 @@ impl Future for MainFuture {
         }
     }
 }
+
+

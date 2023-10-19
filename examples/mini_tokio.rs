@@ -3,7 +3,7 @@ use std::{
     future::Future,
     pin::Pin,
     sync::{Arc, Mutex},
-    task::{Context, Poll},
+    task::{Context, Poll, Waker},
     thread,
     time::{Duration, Instant},
 };
@@ -19,11 +19,20 @@ fn main() {
     let mut mini_tokio = MiniTokio::new();
 
     mini_tokio.spawn(async {
-        let when = Instant::now() + Duration::from_millis(10);
-        let future = Delay { when };
+        // Spawn a task
+        spawn(async {
+            delay(Duration::from_millis(100)).await;
+            println!("world");
+        });
 
-        let out = future.await;
-        assert_eq!(out, "done");
+        // Spawn a second task
+        spawn(async {
+            println!("hello");
+        });
+
+        delay(Duration::from_millis(200)).await;
+
+        std::process::exit(0);
     });
 
     mini_tokio.run();
@@ -62,7 +71,7 @@ impl Task {
     }
 
     fn schedule(self: &Arc<Self>) {
-        self.executor.send(self.clone());
+        let _ = self.executor.send(self.clone());
     }
 }
 
@@ -75,6 +84,7 @@ impl ArcWake for Task {
 impl MiniTokio {
     fn new() -> MiniTokio {
         let (sender, scheduled) = channel::unbounded();
+
         MiniTokio { scheduled, sender }
     }
 
@@ -86,18 +96,75 @@ impl MiniTokio {
         Task::spawn(future, &self.sender)
     }
 
-    fn run(&mut self) {
-        let waker = task::noop_waker();
-        let mut cx = Context::from_waker(&waker);
+    fn run(&self) {
+        CURRENT.with(|cell| {
+            *cell.borrow_mut() = Some(self.sender.clone());
+        });
 
-        // executor never goes to sleep
-        // continuously loops all spawned futures and polls them
-        while let Some(mut task) = self.tasks.pop_front() {
-            if task.as_mut().poll(&mut cx).is_pending() {
-                self.tasks.push_back(task);
+        while let Ok(task) = self.scheduled.recv() {
+            task.poll();
+        }
+    }
+}
+
+pub fn spawn<F>(future: F)
+where
+    F: Future<Output = ()> + Send + 'static,
+{
+    CURRENT.with(|cell| {
+        let borrow = cell.borrow();
+        let sender = borrow.as_ref().unwrap();
+        Task::spawn(future, sender);
+    })
+}
+
+async fn delay(dur: Duration) {
+    struct Delay {
+        when: Instant,
+        waker: Option<Arc<Mutex<Waker>>>,
+    }
+
+    impl Future for Delay {
+        type Output = ();
+
+        fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+            if let Some(waker) = &self.waker {
+                let mut waker = waker.lock().unwrap();
+
+                if !waker.will_wake(cx.waker()) {
+                    *waker = cx.waker().clone();
+                }
+            } else {
+                let when = self.when;
+                let waker = Arc::new(Mutex::new(cx.waker().clone()));
+                self.waker = Some(waker.clone());
+
+                thread::spawn(move || {
+                    let now = Instant::now();
+
+                    if now < when {
+                        thread::sleep(when - now);
+                    }
+
+                    let waker = waker.lock().unwrap();
+                    waker.wake_by_ref();
+                });
+            }
+
+            if Instant::now() >= self.when {
+                Poll::Ready(())
+            } else {
+                Poll::Pending
             }
         }
     }
+
+    let future = Delay {
+        when: Instant::now() + dur,
+        waker: None,
+    };
+
+    future.await
 }
 
 struct Delay {

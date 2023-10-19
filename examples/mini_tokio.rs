@@ -6,13 +6,14 @@ use std::{
     task::{Context, Poll, Waker},
     thread,
     time::{Duration, Instant},
+    sync::mpsc::channel
 };
 
-use crossbeam::channel;
+// use crossbeam::channel;
 use futures::task::{self, ArcWake};
 
 thread_local! {
-    static CURRENT: RefCell<Option<channel::Sender<Arc<Task>>>> = RefCell::new(None);
+    static CURRENT: RefCell<Option<std::sync::mpsc::Sender<Arc<Task>>>> = RefCell::new(None);
 }
 
 fn main() {
@@ -39,13 +40,13 @@ fn main() {
 }
 
 struct MiniTokio {
-    scheduled: channel::Receiver<Arc<Task>>,
-    sender: channel::Sender<Arc<Task>>,
+    scheduled: std::sync::mpsc::Receiver<Arc<Task>>,
+    sender: std::sync::mpsc::Sender<Arc<Task>>,
 }
 
 struct Task {
     future: Mutex<Pin<Box<dyn Future<Output = ()> + Send>>>,
-    executor: channel::Sender<Arc<Task>>,
+    executor: std::sync::mpsc::Sender<Arc<Task>>,
 }
 
 impl Task {
@@ -58,7 +59,7 @@ impl Task {
         let _ = future.as_mut().poll(&mut cx);
     }
 
-    fn spawn<F>(future: F, sender: &channel::Sender<Arc<Task>>)
+    fn spawn<F>(future: F, sender: &std::sync::mpsc::Sender<Arc<Task>>)
     where
         F: Future<Output = ()> + Send + 'static,
     {
@@ -83,7 +84,7 @@ impl ArcWake for Task {
 
 impl MiniTokio {
     fn new() -> MiniTokio {
-        let (sender, scheduled) = channel::unbounded();
+        let (sender, scheduled) = channel();
 
         MiniTokio { scheduled, sender }
     }

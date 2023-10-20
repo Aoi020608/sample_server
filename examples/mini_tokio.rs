@@ -2,11 +2,11 @@ use std::{
     cell::RefCell,
     future::Future,
     pin::Pin,
+    sync::mpsc::channel,
     sync::{Arc, Mutex},
     task::{Context, Poll, Waker},
     thread,
     time::{Duration, Instant},
-    sync::mpsc::channel
 };
 
 // use crossbeam::channel;

@@ -32,7 +32,14 @@ fn main() -> io::Result<()> {
                             "HTTP/1.1 200 OK\r\n\r\n".to_string()
                         } else {
                             if children[1] == "echo" {
-                                format!("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n{}\r\n\r\n", children[2].len(), children[2])
+                                let content: Vec<&str> = children.into_iter().skip(2).collect();
+                                let content = content.join("/");
+                                
+                                format!(
+                                    "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", 
+                                    content.len(), 
+                                    content
+                                )
                             } else {
                                 "HTTP/1.1 404 Not Found\r\n\r\n".to_string()
                             }

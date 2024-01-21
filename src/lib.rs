@@ -18,11 +18,11 @@ pub fn process_instruction(
     let instruction = StakingInstruction::unpack(instruction_data)?;
 
     match instruction {
-        StakingInstruction::InitializeStakeAccount { token } => {
-            processor::initialize_stake_account(program_id, accounts, token)
+        StakingInstruction::InitializeStakeAccount {} => {
+            processor::process_initialize_stake_account(program_id, accounts)
         }
-        StakingInstruction::Stake { token } => processor::stake(program_id, accounts, token),
-        StakingInstruction::Redeem { token } => processor::redeem(program_id, accounts, token),
-        StakingInstruction::Unstake { token } => processor::unstake(program_id, accounts, token),
+        StakingInstruction::Stake {} => processor::process_stake(program_id, accounts),
+        StakingInstruction::Redeem {} => processor::process_redeem(program_id, accounts),
+        StakingInstruction::Unstake {} => processor::process_stake(program_id, accounts),
     }
 }

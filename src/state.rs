@@ -1,20 +1,34 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::{
+    clock::UnixTimestamp,
     program_pack::{IsInitialized, Sealed},
     pubkey::Pubkey,
 };
 
-#[derive(BorshSerialize, BorshDeserialize)]
-pub struct StakingAccountState {
+#[derive(Debug, BorshSerialize, BorshDeserialize)]
+pub struct UserStakeInfo {
     pub is_initialized: bool,
-    pub token: Pubkey,
-    pub insert_date: i64
+    pub token_account: Pubkey,
+    pub stake_start_time: UnixTimestamp,
+    pub last_stake_redeem: UnixTimestamp,
+    pub user_pubkey: Pubkey,
+    pub stake_state: StakeState,
 }
 
-impl Sealed for StakingAccountState {}
+impl UserStakeInfo {
+    pub const SIZE: usize = 1 + 32 + 64 + 64 + 32 + 1;
+}
 
-impl IsInitialized for StakingAccountState {
+impl Sealed for UserStakeInfo {}
+
+impl IsInitialized for UserStakeInfo {
     fn is_initialized(&self) -> bool {
         self.is_initialized
     }
+}
+
+#[derive(Debug, BorshSerialize, BorshDeserialize, PartialEq, Eq)]
+pub enum StakeState {
+    Staked,
+    Unstaked,
 }

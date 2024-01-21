@@ -1,39 +1,24 @@
-use borsh::BorshDeserialize;
-use solana_program::{program_error::ProgramError, pubkey::Pubkey};
+use solana_program::program_error::ProgramError;
 
 pub enum StakingInstruction {
-    InitializeStakeAccount { token: Pubkey },
-    Stake { token: Pubkey },
-    Redeem { token: Pubkey },
-    Unstake { token: Pubkey },
+    InitializeStakeAccount,
+    Stake,
+    Redeem,
+    Unstake,
 }
 
 impl StakingInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
-        let (&varint, rest) = input
+        let (&varint, _rest) = input
             .split_first()
             .ok_or(ProgramError::InvalidInstructionData)?;
-        let payload = StakingPayload::try_from_slice(rest).unwrap();
 
         Ok(match varint {
-            0 => Self::InitializeStakeAccount {
-                token: payload.token,
-            },
-            1 => Self::Stake {
-                token: payload.token,
-            },
-            2 => Self::Redeem {
-                token: payload.token,
-            },
-            3 => Self::Unstake {
-                token: payload.token,
-            },
+            0 => Self::InitializeStakeAccount {},
+            1 => Self::Stake {},
+            2 => Self::Redeem {},
+            3 => Self::Unstake {},
             _ => return Err(ProgramError::InvalidInstructionData),
         })
     }
-}
-
-#[derive(BorshDeserialize)]
-struct StakingPayload {
-    token: Pubkey,
 }

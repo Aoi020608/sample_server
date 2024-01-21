@@ -2,22 +2,22 @@ use solana_program::program_error::ProgramError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
-pub enum ReviewError {
+pub enum StakeError {
     #[error("Account not initialized yet")]
     UninitializedAccount,
 
     #[error("PDA derived does not equal PDA passed in")]
     InvalidPDA,
 
-    #[error("Input data exceeds max length")]
-    InvalidDataLength,
+    #[error("Invalid token account")]
+    InvalidTokenAccount,
 
-    #[error("Rating greater than 5 or less than 1")]
-    InvalidRating,
+    #[error("Invalid stake account")]
+    InvalidStakeAccount,
 }
 
-impl From<ReviewError> for ProgramError {
-    fn from(value: ReviewError) -> Self {
+impl From<StakeError> for ProgramError {
+    fn from(value: StakeError) -> Self {
         ProgramError::Custom(value as u32)
     }
 }

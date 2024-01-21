@@ -1,4 +1,4 @@
-use instruction::MovieInstruction;
+use instruction::StakingInstruction;
 use solana_program::{
     account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey,
 };
@@ -15,18 +15,14 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let instruction = MovieInstruction::unpack(instruction_data)?;
+    let instruction = StakingInstruction::unpack(instruction_data)?;
 
     match instruction {
-        MovieInstruction::AddMovieReview {
-            title,
-            rating,
-            description,
-        } => processor::add_movie_review(program_id, accounts, title, rating, description),
-        MovieInstruction::UpdateMovieReview {
-            title,
-            rating,
-            description,
-        } => processor::update_movie_review(program_id, accounts, title, rating, description),
+        StakingInstruction::InitializeStakeAccount { token } => {
+            processor::initialize_stake_account(program_id, accounts, token)
+        }
+        StakingInstruction::Stake { token } => processor::stake(program_id, accounts, token),
+        StakingInstruction::Redeem { token } => processor::redeem(program_id, accounts, token),
+        StakingInstruction::Unstake { token } => processor::unstake(program_id, accounts, token),
     }
 }

@@ -1,21 +1,11 @@
-use borsh::BorshSerialize;
 use instruction::MovieInstruction;
 use solana_program::{
-    account_info::{next_account_info, AccountInfo},
-    borsh0_10::try_from_slice_unchecked,
-    entrypoint,
-    entrypoint::ProgramResult,
-    msg,
-    program::invoke_signed,
-    pubkey::Pubkey,
-    rent::Rent,
-    system_instruction,
-    sysvar::Sysvar,
+    account_info::AccountInfo, entrypoint, entrypoint::ProgramResult, pubkey::Pubkey,
 };
 
-use crate::state::MovieAccountState;
-
+pub mod error;
 pub mod instruction;
+pub mod processor;
 pub mod state;
 
 entrypoint!(process_instruction);
@@ -32,72 +22,11 @@ pub fn process_instruction(
             title,
             rating,
             description,
-        } => add_movie_review(program_id, accounts, title, rating, description),
+        } => processor::add_movie_review(program_id, accounts, title, rating, description),
+        MovieInstruction::UpdateMovieReview {
+            title,
+            rating,
+            description,
+        } => processor::update_movie_review(program_id, accounts, title, rating, description),
     }
-}
-
-pub fn add_movie_review(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    title: String,
-    rating: u8,
-    description: String,
-) -> ProgramResult {
-    let account_info_iter = &mut accounts.iter();
-
-    let initializer = next_account_info(account_info_iter)?;
-    let pda_account = next_account_info(account_info_iter)?;
-    let system_program = next_account_info(account_info_iter)?;
-
-    let (pda, bump_seed) = Pubkey::find_program_address(
-        &[initializer.key.as_ref(), title.as_bytes().as_ref()],
-        program_id,
-    );
-
-    let account_len = 1 + 1 + (4 + title.len()) + (4 + description.len());
-
-    let rent = Rent::get()?;
-    let rent_lamports = rent.minimum_balance(account_len);
-
-    invoke_signed(
-        &system_instruction::create_account(
-            initializer.key,
-            pda_account.key,
-            rent_lamports,
-            account_len as u64,
-            program_id,
-        ),
-        &[
-            initializer.clone(),
-            pda_account.clone(),
-            system_program.clone(),
-        ],
-        &[&[
-            initializer.key.as_ref(),
-            title.as_bytes().as_ref(),
-            &[bump_seed],
-        ]],
-    )?;
-
-    msg!("PDA created: {}", pda);
-
-    msg!("unpacking state account");
-    let mut account_data =
-        try_from_slice_unchecked::<MovieAccountState>(&pda_account.data.borrow()).unwrap();
-
-    account_data.title = title;
-    account_data.rating = rating;
-    account_data.description = description;
-    account_data.is_initialized = true;
-
-    msg!("Serializing account");
-    account_data.serialize(&mut &mut pda_account.data.borrow_mut()[..])?;
-    msg!("state account serialized");
-
-    msg!("Adding movie review...");
-    msg!("Title: {}", &account_data.title);
-    msg!("Rating: {}", rating);
-    msg!("Description: {}", &account_data.description);
-
-    Ok(())
 }

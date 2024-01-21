@@ -1,36 +1,32 @@
 use borsh::BorshDeserialize;
-use solana_program::program_error::ProgramError;
+use solana_program::{program_error::ProgramError, pubkey::Pubkey};
 
-pub enum MovieInstruction {
-    AddMovieReview {
-        title: String,
-        rating: u8,
-        description: String,
-    },
-    UpdateMovieReview {
-        title: String,
-        rating: u8,
-        description: String,
-    },
+pub enum StakingInstruction {
+    InitializeStakeAccount { token: Pubkey },
+    Stake { token: Pubkey },
+    Redeem { token: Pubkey },
+    Unstake { token: Pubkey },
 }
 
-impl MovieInstruction {
+impl StakingInstruction {
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
         let (&varint, rest) = input
             .split_first()
             .ok_or(ProgramError::InvalidInstructionData)?;
-        let payload = MovieReviewPayload::try_from_slice(rest).unwrap();
+        let payload = StakingPayload::try_from_slice(rest).unwrap();
 
         Ok(match varint {
-            0 => Self::AddMovieReview {
-                title: payload.title,
-                rating: payload.rating,
-                description: payload.description,
+            0 => Self::InitializeStakeAccount {
+                token: payload.token,
             },
-            1 => Self::UpdateMovieReview {
-                title: payload.title,
-                rating: payload.rating,
-                description: payload.description,
+            1 => Self::Stake {
+                token: payload.token,
+            },
+            2 => Self::Redeem {
+                token: payload.token,
+            },
+            3 => Self::Unstake {
+                token: payload.token,
             },
             _ => return Err(ProgramError::InvalidInstructionData),
         })
@@ -38,8 +34,6 @@ impl MovieInstruction {
 }
 
 #[derive(BorshDeserialize)]
-struct MovieReviewPayload {
-    title: String,
-    rating: u8,
-    description: String,
+struct StakingPayload {
+    token: Pubkey,
 }

@@ -582,7 +582,9 @@ dependencies = [
 name = "hahatoco"
 version = "0.1.0"
 dependencies = [
+ "borsh 0.10.3",
  "solana-program",
+ "thiserror",
 ]
 
 [[package]]

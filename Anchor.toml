@@ -1,4 +1,5 @@
 [toolchain]
+solana_program = "1.16.0"
 
 [features]
 seeds = true

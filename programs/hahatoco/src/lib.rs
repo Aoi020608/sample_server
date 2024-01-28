@@ -53,47 +53,9 @@ pub mod hahatoco {
         Ok(())
     }
 
-    pub fn create_reward_mint(
-        ctx: Context<CreateTokenReward>,
-        uri: String,
-        name: String,
-        symbol: String,
-    ) -> Result<()> {
+    pub fn create_reward_mint(_ctx: Context<CreateTokenReward>) -> Result<()> {
         msg!("Create Reward Token");
 
-        let seeds = &["mint".as_bytes(), &[ctx.bumps.reward_mint]];
-
-        let signer = [&seeds[..]];
-        let cpi_program = ctx.accounts.token_program;
-        let cpi_accounts = token::InitializeMint {
-            mint: ctx.accounts.reward_mint.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
-        };
-
-        let cpi_ctx = CpiContext::new(cpi_program.to_account_info(), cpi_accounts);
-        token::initialize_mint(cpi_ctx, 6, &ctx.accounts.user.key(), None);
-
-        let account_info = vec![
-            ctx.accounts.metadata.to_account_info(),
-            ctx.accounts.reward_mint.to_account_info(),
-            ctx.accounts.user.to_account_info(),
-            ctx.accounts.token_metadata_program.to_account_info(),
-            ctx.accounts.system_program.to_account_info(),
-            ctx.accounts.rent.to_account_info(),
-        ];
-
-        let create_ix = CreateV1Builder::new()
-            .metadata(ctx.accounts.metadata.key())
-            .mint(ctx.accounts.reward_mint.key(), true)
-            .authority(ctx.accounts.user.key())
-            .payer(ctx.accounts.user.key())
-            .update_authority(ctx.accounts.user.key(), false)
-            .name(name)
-            .symbol(symbol)
-            .uri(uri)
-            .instruction();
-
-        invoke_signed(&create_ix, &account_info, &signer)?;
         Ok(())
     }
 }
@@ -151,7 +113,8 @@ pub struct CreateTokenReward<'info> {
         seeds = ["mint".as_bytes()],
         bump,
         payer = user,
-        space = Mint::LEN
+        mint::decimals = 6,
+        mint::authority = reward_mint,
     )]
     pub reward_mint: Account<'info, Mint>,
 

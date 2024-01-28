@@ -169,16 +169,8 @@ pub fn main() {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let (reward_mint_pda, _bump) = Pubkey::find_program_address(&[b"mint"], &program_id);
-
-            let (metadata_pda, _) = Pubkey::find_program_address(
-                &[
-                    b"metadata",
-                    mpl_token_metadata::ID.as_ref(),
-                    reward_mint_pda.as_ref(),
-                ],
-                &mpl_token_metadata::ID,
-            );
+            let (reward_mint_pda, _bump) =
+                Pubkey::find_program_address(&["mint".as_bytes()], &program_id);
 
             let sig = program
                 .request()
@@ -189,14 +181,8 @@ pub fn main() {
                     system_program: system_program::ID,
                     rent: sysvar::rent::ID,
                     token_program: spl_token::ID,
-                    metadata: metadata_pda,
-                    token_metadata_program: mpl_token_metadata::ID,
                 })
-                .args(hahatoco_instruction::CreateRewardMint {
-                    name: "Top Gun".to_string(),
-                    symbol: "TOG".to_string(),
-                    uri: "".to_string(),
-                })
+                .args(hahatoco_instruction::CreateRewardMint {})
                 .send();
 
             match sig {

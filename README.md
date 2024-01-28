@@ -13,4 +13,4 @@ Program ID: *GLiyYWDzXiVfTKEx7T1SLsPyh6eohZeBYxvG5Q95ismh*
 
 
 ## REFERENCES
-
+- [staking with anchor](https://buildspace.so/p/solana-core/lessons/staking-with-anchor)

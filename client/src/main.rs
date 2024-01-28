@@ -6,7 +6,8 @@ use dotenv::dotenv;
 use hahatoco::accounts as hahatoco_accounts;
 use hahatoco::instruction as hahatoco_instruction;
 use solana_sdk::signature::read_keypair_file;
-use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signer::Signer};
+use solana_sdk::signer::Signer;
+use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -17,9 +18,19 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Initialize { program_id: String },
+    AddMovieReview {
+        program_id: String,
+        title: String,
+        rating: u8,
+        description: String,
+    },
 
-    Increment { program_id: String },
+    UpdateMovieReview {
+        program_id: String,
+        title: String,
+        rating: u8,
+        description: String,
+    },
 }
 pub fn main() {
     dotenv().ok();
@@ -33,48 +44,35 @@ pub fn main() {
 
     match &cli.command {
         // Initialize
-        Commands::Initialize { program_id } => {
+        Commands::AddMovieReview {
+            program_id,
+            title,
+            rating,
+            description,
+        } => {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let authority = program.payer();
+            let initializer = payer.pubkey();
+
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes(), initializer.as_ref()],
+                &program_id,
+            );
 
             let sig = program
                 .request()
-                .signer(&counter)
                 .payer(&payer)
-                .accounts(hahatoco_accounts::Initialize {
-                    user: authority,
-                    counter: counter.pubkey(),
+                .accounts(hahatoco_accounts::AddMovieReview {
+                    movie_review: pda_account,
+                    initializer,
                     system_program: system_program::ID,
                 })
-                .args(hahatoco_instruction::Initialize { authority })
-                .send();
-
-            match sig {
-                Ok(transaction_sig) => {
-                    println!(
-                        "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
-                        transaction_sig
-                    );
-                }
-                Err(e) => println!("Error: {}", e),
-            }
-        }
-
-        Commands::Increment { program_id } => {
-            let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
-            let program = client.program(program_id).expect("");
-
-            let authority = program.payer();
-
-            let sig = program
-                .request()
-                .accounts(hahatoco_accounts::Increment {
-                    counter: counter.pubkey(),
-                    authority,
+                .args(hahatoco_instruction::AddMovieReview {
+                    title: title.to_string().clone(),
+                    rating: *rating,
+                    description: description.to_string().clone(),
                 })
-                .args(hahatoco_instruction::Increment {})
                 .send();
 
             match sig {
@@ -87,6 +85,37 @@ pub fn main() {
                 Err(e) => println!("Error: {}", e),
             }
         }
+
+        Commands::UpdateMovieReview {
+            program_id,
+            title,
+            rating,
+            description,
+        } => {} // Commands::Increment { program_id } => {
+                //     let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
+                //     let program = client.program(program_id).expect("");
+
+                //     let authority = program.payer();
+
+                //     let sig = program
+                //         .request()
+                //         .accounts(hahatoco_accounts::Increment {
+                //             counter: counter.pubkey(),
+                //             authority,
+                //         })
+                //         .args(hahatoco_instruction::Increment {})
+                //         .send();
+
+                //     match sig {
+                //         Ok(transaction_sig) => {
+                //             println!(
+                //                 "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
+                //                 transaction_sig
+                //             );
+                //         }
+                //         Err(e) => println!("Error: {}", e),
+                //     }
+                // }
     }
 }
 

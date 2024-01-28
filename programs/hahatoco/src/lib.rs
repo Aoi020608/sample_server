@@ -1,13 +1,14 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
-declare_id!("5gJBdt8qtYxCDQ4LnXgYPXgq9FmtDGNaweKZojWkem5H");
+declare_id!("7SQRQrtE8n1QTbkcw22GcW1rGpk9D1WQtTUWp2o7DaHJ");
 
 #[program]
 pub mod hahatoco {
-    use anchor_spl::token;
-    use mpl_token_metadata::instructions::CreateV1Builder;
-    use solana_program::program::invoke_signed;
+    use anchor_spl::token::{mint_to, MintTo};
 
     use super::*;
 
@@ -27,6 +28,21 @@ pub mod hahatoco {
         movie_review.rating = rating;
         movie_review.title = title;
         movie_review.description = description;
+
+        mint_to(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    authority: ctx.accounts.reward_mint.to_account_info(),
+                    to: ctx.accounts.token_account.to_account_info(),
+                    mint: ctx.accounts.reward_mint.to_account_info(),
+                },
+                &[&["mint".as_bytes(), &[ctx.bumps.reward_mint]]],
+            ),
+            10 * 10 ^ 6,
+        )?;
+
+        msg!("Minted tokens");
 
         Ok(())
     }
@@ -76,6 +92,27 @@ pub struct AddMovieReview<'info> {
     pub initializer: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+
+    pub token_program: Program<'info, Token>,
+
+    #[account(
+        mut,
+        seeds = ["mint".as_bytes()],
+        bump
+    )]
+    pub reward_mint: Account<'info, Mint>,
+
+    #[account(
+        init_if_needed,
+        payer = initializer,
+        associated_token::mint = reward_mint,
+        associated_token::authority = initializer
+    )]
+    pub token_account: Account<'info, TokenAccount>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>,
+
+    pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]

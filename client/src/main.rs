@@ -9,6 +9,7 @@ use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 use solana_sdk::sysvar;
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
+use spl_associated_token_account::get_associated_token_address;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -64,18 +65,30 @@ pub fn main() {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let (pda_account, _bump) = Pubkey::find_program_address(
+            let (movie_review_pda, _bump) = Pubkey::find_program_address(
                 &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
                 &program_id,
             );
+
+            let (reward_mint_pda, _bump) =
+                Pubkey::find_program_address(&["mint".as_bytes()], &program_id);
+
+            let wallet_address =
+                Pubkey::from_str("Gpmu44vFy4enn9K8nMUQtMdY6JyEpF6dRp52to4Sv87h").unwrap();
+            let token_account = get_associated_token_address(&wallet_address, &reward_mint_pda);
 
             let sig = program
                 .request()
                 .signer(&initializer)
                 .accounts(hahatoco_accounts::AddMovieReview {
-                    movie_review: pda_account,
+                    movie_review: movie_review_pda,
                     initializer: initializer.pubkey(),
                     system_program: system_program::ID,
+                    token_program: spl_token::ID,
+                    reward_mint: reward_mint_pda,
+                    token_account,
+                    associated_token_program: spl_associated_token_account::id(),
+                    rent: sysvar::rent::ID,
                 })
                 .args(hahatoco_instruction::AddMovieReview {
                     title: title.to_string().clone(),
@@ -214,3 +227,4 @@ pub fn initialize_keypair() -> Keypair {
         }
     }
 }
+

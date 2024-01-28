@@ -1,62 +1,104 @@
 use anchor_lang::prelude::*;
 
-declare_id!("CiQgCHtk9t7V5C7m1UMKCD7aoz7Egzida1BhVQQ1UnQ4");
+declare_id!("6isbUU3MjrbL6LUqejw1naCAmyUHSZGoDuVSfZPaRK9k");
 
 #[program]
 pub mod hahatoco {
-    use anchor_lang::{context::Context, Result};
-
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, authority: Pubkey) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
+    pub fn add_movie_review(
+        ctx: Context<AddMovieReview>,
+        title: String,
+        description: String,
+        rating: u8,
+    ) -> Result<()> {
+        msg!("Movie Review Account Created");
+        msg!("Title: {}", title);
+        msg!("Description: {}", description);
+        msg!("Rating: {}", rating);
 
-        msg!("Previous Count: {}", counter.count);
-
-        counter.authority = authority;
-        counter.count = 0;
-
-        msg!("Counter Incremented");
-        msg!("Counter count: {}", counter.count);
+        let movie_review = &mut ctx.accounts.movie_review;
+        movie_review.reviewer = ctx.accounts.initializer.key();
+        movie_review.rating = rating;
+        movie_review.title = title;
+        movie_review.description = description;
 
         Ok(())
     }
 
-    pub fn increment(ctx: Context<Increment>) -> Result<()> {
-        let counter = &mut ctx.accounts.counter;
+    pub fn update_movie_review(
+        ctx: Context<UpdateMovieReview>,
+        title: String,
+        description: String,
+        rating: u8,
+    ) -> Result<()> {
+        msg!("Update Review Account Created");
+        msg!("Title: {}", title);
+        msg!("Description: {}", description);
+        msg!("Rating: {}", rating);
 
-        msg!("Previous Count: {}", counter.count);
+        let movie_review = &mut ctx.accounts.movie_review;
+        movie_review.rating = rating;
+        movie_review.description = description;
 
-        counter.count += 1;
+        Ok(())
+    }
 
-        msg!("Counter Incremented");
-        msg!("Current count: {}", counter.count);
-
+    pub fn close(_ctx: Context<Close>) -> Result<()> {
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(init, payer = user, space = 8 + 40)]
-    pub counter: Account<'info, Counter>,
+#[instruction(title: String, description: String, rating: u8)]
+pub struct AddMovieReview<'info> {
+    #[account(
+        init,
+        seeds = [title.as_bytes().as_ref(), initializer.key.as_ref()],
+        bump,
+        payer = initializer,
+        space = 8 + 32 + 1 + 4 + title.len() + 4 + description.len()
+    )]
+    pub movie_review: Account<'info, MovieAccountState>,
 
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub initializer: Signer<'info>,
 
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct Increment<'info> {
-    #[account(mut, has_one = authority)]
-    pub counter: Account<'info, Counter>,
+#[instruction(title: String, description: String, rating: u8)]
+pub struct UpdateMovieReview<'info> {
+    #[account(
+        mut,
+        seeds = [title.as_bytes().as_ref(), initializer.key.as_ref()],
+        bump,
+        realloc = 8 + 32 + 1 + 4 + title.len() + 4 + description.len(),
+        realloc::payer = initializer,
+        realloc::zero = true,
+    )]
+    pub movie_review: Account<'info, MovieAccountState>,
 
-    pub authority: Signer<'info>,
+    #[account(mut)]
+    pub initializer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Close<'info> {
+    #[account(mut, close = reviewer, has_one = reviewer)]
+    movie_review: Account<'info, MovieAccountState>,
+
+    #[account(mut)]
+    reviewer: Signer<'info>,
 }
 
 #[account]
-pub struct Counter {
-    pub authority: Pubkey,
-    pub count: u64,
+pub struct MovieAccountState {
+    pub reviewer: Pubkey,
+    pub rating: u8,
+    pub title: String,
+    pub description: String,
 }

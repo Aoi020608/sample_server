@@ -6,7 +6,7 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-hahatoco = "CiQgCHtk9t7V5C7m1UMKCD7aoz7Egzida1BhVQQ1UnQ4"
+hahatoco = "6isbUU3MjrbL6LUqejw1naCAmyUHSZGoDuVSfZPaRK9k"
 
 [registry]
 url = "https://api.apr.dev"
@@ -17,3 +17,5 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+remove = "rm target/deploy/hahatoco-keypair.json"
+generate = "solana-keygen new -o target/deploy/hahatoco-keypair.json"

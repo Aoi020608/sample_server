@@ -11,6 +11,9 @@ Program ID: *GLiyYWDzXiVfTKEx7T1SLsPyh6eohZeBYxvG5Q95ismh*
 
 ## Libraries
 
+## Problems
+- 0x1: Custom program error: 0x1 implies that you have insufficient funds to execute the transaction.
+
 
 ## REFERENCES
 - [staking with anchor](https://buildspace.so/p/solana-core/lessons/staking-with-anchor)

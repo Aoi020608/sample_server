@@ -6,7 +6,8 @@ use dotenv::dotenv;
 use hahatoco::accounts as hahatoco_accounts;
 use hahatoco::instruction as hahatoco_instruction;
 use solana_sdk::signature::read_keypair_file;
-use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey, signer::Signer};
+use solana_sdk::signer::Signer;
+use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -17,9 +18,24 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    Initialize { program_id: String },
+    AddMovieReview {
+        program_id: String,
+        title: String,
+        rating: u8,
+        description: String,
+    },
 
-    Increment { program_id: String },
+    UpdateMovieReview {
+        program_id: String,
+        title: String,
+        rating: u8,
+        description: String,
+    },
+
+    Close {
+        program_id: String,
+        title: String,
+    },
 }
 pub fn main() {
     dotenv().ok();
@@ -29,26 +45,40 @@ pub fn main() {
 
     let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
 
-    let counter = initialize_keypair();
+    let initializer = initialize_keypair();
+    eprintln!("Initializer Pubkey: {}", initializer.pubkey());
 
     match &cli.command {
         // Initialize
-        Commands::Initialize { program_id } => {
+        Commands::AddMovieReview {
+            program_id,
+            title,
+            rating,
+            description,
+        } => {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let authority = program.payer();
+            // let initializer = Keypair::new();
+
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
+                &program_id,
+            );
 
             let sig = program
                 .request()
-                .signer(&counter)
-                .payer(&payer)
-                .accounts(hahatoco_accounts::Initialize {
-                    user: authority,
-                    counter: counter.pubkey(),
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::AddMovieReview {
+                    movie_review: pda_account,
+                    initializer: initializer.pubkey(),
                     system_program: system_program::ID,
                 })
-                .args(hahatoco_instruction::Initialize { authority })
+                .args(hahatoco_instruction::AddMovieReview {
+                    title: title.to_string().clone(),
+                    description: description.to_string().clone(),
+                    rating: *rating,
+                })
                 .send();
 
             match sig {
@@ -62,19 +92,33 @@ pub fn main() {
             }
         }
 
-        Commands::Increment { program_id } => {
+        Commands::UpdateMovieReview {
+            program_id,
+            title,
+            rating,
+            description,
+        } => {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let authority = program.payer();
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
+                &program_id,
+            );
 
             let sig = program
                 .request()
-                .accounts(hahatoco_accounts::Increment {
-                    counter: counter.pubkey(),
-                    authority,
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::UpdateMovieReview {
+                    movie_review: pda_account,
+                    initializer: initializer.pubkey(),
+                    system_program: system_program::ID,
                 })
-                .args(hahatoco_instruction::Increment {})
+                .args(hahatoco_instruction::UpdateMovieReview {
+                    title: title.to_string().clone(),
+                    description: description.to_string().clone(),
+                    rating: *rating,
+                })
                 .send();
 
             match sig {
@@ -83,6 +127,36 @@ pub fn main() {
                         "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
                         transaction_sig
                     );
+                }
+                Err(e) => println!("Error: {}", e),
+            }
+        }
+
+        Commands::Close { program_id, title } => {
+            let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
+            let program = client.program(program_id).expect("");
+
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
+                &program_id,
+            );
+
+            let sig = program
+                .request()
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::Close {
+                    movie_review: pda_account,
+                    reviewer: initializer.pubkey(),
+                })
+                .args(hahatoco_instruction::Close {})
+                .send();
+
+            match sig {
+                Ok(transaction_sig) => {
+                    println!(
+                                 "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
+                                 transaction_sig
+                             );
                 }
                 Err(e) => println!("Error: {}", e),
             }

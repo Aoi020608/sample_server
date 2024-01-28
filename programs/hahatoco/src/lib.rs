@@ -1,9 +1,15 @@
 use anchor_lang::prelude::*;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{Mint, Token, TokenAccount},
+};
 
-declare_id!("6isbUU3MjrbL6LUqejw1naCAmyUHSZGoDuVSfZPaRK9k");
+declare_id!("7SQRQrtE8n1QTbkcw22GcW1rGpk9D1WQtTUWp2o7DaHJ");
 
 #[program]
 pub mod hahatoco {
+    use anchor_spl::token::{mint_to, MintTo};
+
     use super::*;
 
     pub fn add_movie_review(
@@ -22,6 +28,21 @@ pub mod hahatoco {
         movie_review.rating = rating;
         movie_review.title = title;
         movie_review.description = description;
+
+        mint_to(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    authority: ctx.accounts.reward_mint.to_account_info(),
+                    to: ctx.accounts.token_account.to_account_info(),
+                    mint: ctx.accounts.reward_mint.to_account_info(),
+                },
+                &[&["mint".as_bytes(), &[ctx.bumps.reward_mint]]],
+            ),
+            10 * 10 ^ 6,
+        )?;
+
+        msg!("Minted tokens");
 
         Ok(())
     }
@@ -47,6 +68,12 @@ pub mod hahatoco {
     pub fn close(_ctx: Context<Close>) -> Result<()> {
         Ok(())
     }
+
+    pub fn create_reward_mint(_ctx: Context<CreateTokenReward>) -> Result<()> {
+        msg!("Create Reward Token");
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -65,6 +92,27 @@ pub struct AddMovieReview<'info> {
     pub initializer: Signer<'info>,
 
     pub system_program: Program<'info, System>,
+
+    pub token_program: Program<'info, Token>,
+
+    #[account(
+        mut,
+        seeds = ["mint".as_bytes()],
+        bump
+    )]
+    pub reward_mint: Account<'info, Mint>,
+
+    #[account(
+        init_if_needed,
+        payer = initializer,
+        associated_token::mint = reward_mint,
+        associated_token::authority = initializer
+    )]
+    pub token_account: Account<'info, TokenAccount>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>,
+
+    pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
@@ -93,6 +141,28 @@ pub struct Close<'info> {
 
     #[account(mut)]
     reviewer: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct CreateTokenReward<'info> {
+    #[account(
+        init,
+        seeds = ["mint".as_bytes()],
+        bump,
+        payer = user,
+        mint::decimals = 6,
+        mint::authority = reward_mint,
+    )]
+    pub reward_mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub user: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+
+    pub rent: Sysvar<'info, Rent>,
+
+    pub token_program: Program<'info, Token>,
 }
 
 #[account]

@@ -6,7 +6,7 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-hahatoco = "6isbUU3MjrbL6LUqejw1naCAmyUHSZGoDuVSfZPaRK9k"
+hahatoco = "5gJBdt8qtYxCDQ4LnXgYPXgq9FmtDGNaweKZojWkem5H"
 
 [registry]
 url = "https://api.apr.dev"

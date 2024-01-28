@@ -7,6 +7,7 @@ use hahatoco::accounts as hahatoco_accounts;
 use hahatoco::instruction as hahatoco_instruction;
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
+use solana_sdk::sysvar;
 use solana_sdk::{commitment_config::CommitmentConfig, pubkey::Pubkey};
 
 #[derive(Parser)]
@@ -36,6 +37,10 @@ enum Commands {
         program_id: String,
         title: String,
     },
+
+    CreateTokenReward {
+        program_id: String,
+    },
 }
 pub fn main() {
     dotenv().ok();
@@ -58,8 +63,6 @@ pub fn main() {
         } => {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
-
-            // let initializer = Keypair::new();
 
             let (pda_account, _bump) = Pubkey::find_program_address(
                 &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
@@ -149,6 +152,51 @@ pub fn main() {
                     reviewer: initializer.pubkey(),
                 })
                 .args(hahatoco_instruction::Close {})
+                .send();
+
+            match sig {
+                Ok(transaction_sig) => {
+                    println!(
+                                 "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
+                                 transaction_sig
+                             );
+                }
+                Err(e) => println!("Error: {}", e),
+            }
+        }
+
+        Commands::CreateTokenReward { program_id } => {
+            let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
+            let program = client.program(program_id).expect("");
+
+            let (reward_mint_pda, _bump) = Pubkey::find_program_address(&[b"mint"], &program_id);
+
+            let (metadata_pda, _) = Pubkey::find_program_address(
+                &[
+                    b"metadata",
+                    mpl_token_metadata::ID.as_ref(),
+                    reward_mint_pda.as_ref(),
+                ],
+                &mpl_token_metadata::ID,
+            );
+
+            let sig = program
+                .request()
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::CreateTokenReward {
+                    reward_mint: reward_mint_pda,
+                    user: initializer.pubkey(),
+                    system_program: system_program::ID,
+                    rent: sysvar::rent::ID,
+                    token_program: spl_token::ID,
+                    metadata: metadata_pda,
+                    token_metadata_program: mpl_token_metadata::ID,
+                })
+                .args(hahatoco_instruction::CreateRewardMint {
+                    name: "Top Gun".to_string(),
+                    symbol: "TOG".to_string(),
+                    uri: "".to_string(),
+                })
                 .send();
 
             match sig {

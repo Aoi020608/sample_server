@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("CbLbhw7inEiAxkDFSticLhuNzaLJHYcFnRaTRyCcbrW4");
+declare_id!("6isbUU3MjrbL6LUqejw1naCAmyUHSZGoDuVSfZPaRK9k");
 
 #[program]
 pub mod hahatoco {
@@ -9,8 +9,8 @@ pub mod hahatoco {
     pub fn add_movie_review(
         ctx: Context<AddMovieReview>,
         title: String,
-        rating: u8,
         description: String,
+        rating: u8,
     ) -> Result<()> {
         msg!("Movie Review Account Created");
         msg!("Title: {}", title);
@@ -29,8 +29,8 @@ pub mod hahatoco {
     pub fn update_movie_review(
         ctx: Context<UpdateMovieReview>,
         title: String,
-        rating: u8,
         description: String,
+        rating: u8,
     ) -> Result<()> {
         msg!("Update Review Account Created");
         msg!("Title: {}", title);
@@ -50,11 +50,11 @@ pub mod hahatoco {
 }
 
 #[derive(Accounts)]
-#[instruction(title: String, description: String)]
+#[instruction(title: String, description: String, rating: u8)]
 pub struct AddMovieReview<'info> {
     #[account(
         init,
-        seeds = [title.as_bytes(), initializer.key.as_ref()],
+        seeds = [title.as_bytes().as_ref(), initializer.key.as_ref()],
         bump,
         payer = initializer,
         space = 8 + 32 + 1 + 4 + title.len() + 4 + description.len()
@@ -68,11 +68,11 @@ pub struct AddMovieReview<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(title: String, description: String)]
+#[instruction(title: String, description: String, rating: u8)]
 pub struct UpdateMovieReview<'info> {
     #[account(
         mut,
-        seeds = [title.as_bytes(), initializer.key.as_ref()],
+        seeds = [title.as_bytes().as_ref(), initializer.key.as_ref()],
         bump,
         realloc = 8 + 32 + 1 + 4 + title.len() + 4 + description.len(),
         realloc::payer = initializer,

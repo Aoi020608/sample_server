@@ -31,6 +31,11 @@ enum Commands {
         rating: u8,
         description: String,
     },
+
+    Close {
+        program_id: String,
+        title: String,
+    },
 }
 pub fn main() {
     dotenv().ok();
@@ -40,7 +45,8 @@ pub fn main() {
 
     let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
 
-    let counter = initialize_keypair();
+    let initializer = initialize_keypair();
+    eprintln!("Initializer Pubkey: {}", initializer.pubkey());
 
     match &cli.command {
         // Initialize
@@ -53,25 +59,25 @@ pub fn main() {
             let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
             let program = client.program(program_id).expect("");
 
-            let initializer = payer.pubkey();
+            // let initializer = Keypair::new();
 
             let (pda_account, _bump) = Pubkey::find_program_address(
-                &[title.as_bytes(), initializer.as_ref()],
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
                 &program_id,
             );
 
             let sig = program
                 .request()
-                .payer(&payer)
+                .signer(&initializer)
                 .accounts(hahatoco_accounts::AddMovieReview {
                     movie_review: pda_account,
-                    initializer,
+                    initializer: initializer.pubkey(),
                     system_program: system_program::ID,
                 })
                 .args(hahatoco_instruction::AddMovieReview {
                     title: title.to_string().clone(),
-                    rating: *rating,
                     description: description.to_string().clone(),
+                    rating: *rating,
                 })
                 .send();
 
@@ -91,31 +97,70 @@ pub fn main() {
             title,
             rating,
             description,
-        } => {} // Commands::Increment { program_id } => {
-                //     let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
-                //     let program = client.program(program_id).expect("");
+        } => {
+            let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
+            let program = client.program(program_id).expect("");
 
-                //     let authority = program.payer();
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
+                &program_id,
+            );
 
-                //     let sig = program
-                //         .request()
-                //         .accounts(hahatoco_accounts::Increment {
-                //             counter: counter.pubkey(),
-                //             authority,
-                //         })
-                //         .args(hahatoco_instruction::Increment {})
-                //         .send();
+            let sig = program
+                .request()
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::UpdateMovieReview {
+                    movie_review: pda_account,
+                    initializer: initializer.pubkey(),
+                    system_program: system_program::ID,
+                })
+                .args(hahatoco_instruction::UpdateMovieReview {
+                    title: title.to_string().clone(),
+                    description: description.to_string().clone(),
+                    rating: *rating,
+                })
+                .send();
 
-                //     match sig {
-                //         Ok(transaction_sig) => {
-                //             println!(
-                //                 "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
-                //                 transaction_sig
-                //             );
-                //         }
-                //         Err(e) => println!("Error: {}", e),
-                //     }
-                // }
+            match sig {
+                Ok(transaction_sig) => {
+                    println!(
+                        "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
+                        transaction_sig
+                    );
+                }
+                Err(e) => println!("Error: {}", e),
+            }
+        }
+
+        Commands::Close { program_id, title } => {
+            let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
+            let program = client.program(program_id).expect("");
+
+            let (pda_account, _bump) = Pubkey::find_program_address(
+                &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
+                &program_id,
+            );
+
+            let sig = program
+                .request()
+                .signer(&initializer)
+                .accounts(hahatoco_accounts::Close {
+                    movie_review: pda_account,
+                    reviewer: initializer.pubkey(),
+                })
+                .args(hahatoco_instruction::Close {})
+                .send();
+
+            match sig {
+                Ok(transaction_sig) => {
+                    println!(
+                                 "Transaction https://explorer.solana.com/tx/{}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899",
+                                 transaction_sig
+                             );
+                }
+                Err(e) => println!("Error: {}", e),
+            }
+        }
     }
 }
 

@@ -27,3 +27,4 @@ So somewhere in your program, you're declaring a different program id than the o
 - [staking with anchor](https://buildspace.so/p/solana-core/lessons/staking-with-anchor)
 - [Token Metadata](https://developers.metaplex.com/token-metadata/mint)
 - [anchor-cpi](https://www.soldev.app/course/anchor-cpi)
+- [Error code](https://github.com/coral-xyz/anchor/blob/master/lang/src/error.rs)

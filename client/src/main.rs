@@ -73,9 +73,8 @@ pub fn main() {
             let (reward_mint_pda, _bump) =
                 Pubkey::find_program_address(&["mint".as_bytes()], &program_id);
 
-            let wallet_address =
-                Pubkey::from_str("Gpmu44vFy4enn9K8nMUQtMdY6JyEpF6dRp52to4Sv87h").unwrap();
-            let token_account = get_associated_token_address(&wallet_address, &reward_mint_pda);
+            let token_account =
+                get_associated_token_address(&initializer.pubkey(), &reward_mint_pda);
 
             let sig = program
                 .request()
@@ -227,4 +226,3 @@ pub fn initialize_keypair() -> Keypair {
         }
     }
 }
-

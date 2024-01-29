@@ -17,11 +17,14 @@ pub mod hahatoco {
         title: String,
         description: String,
         rating: u8,
+        input: State,
     ) -> Result<()> {
         msg!("Movie Review Account Created");
         msg!("Title: {}", title);
         msg!("Description: {}", description);
         msg!("Rating: {}", rating);
+
+        ctx.accounts.state.set_inner(input);
 
         let movie_review = &mut ctx.accounts.movie_review;
         movie_review.reviewer = ctx.accounts.initializer.key();
@@ -87,6 +90,15 @@ pub struct AddMovieReview<'info> {
         space = 8 + 32 + 1 + 4 + title.len() + 4 + description.len()
     )]
     pub movie_review: Account<'info, MovieAccountState>,
+
+    #[account(
+        init,
+        seeds = [title.as_bytes().as_ref(), initializer.key.as_ref()],
+        bump,
+        payer = initializer,
+        space = 8 + 8
+    )]
+    pub state: Account<'info, State>,
 
     #[account(mut)]
     pub initializer: Signer<'info>,
@@ -171,4 +183,9 @@ pub struct MovieAccountState {
     pub rating: u8,
     pub title: String,
     pub description: String,
+}
+
+#[account]
+pub struct State {
+    pub x: u64,
 }

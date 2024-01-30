@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -11,6 +13,11 @@ pub mod hahatoco {
     use anchor_spl::token::{mint_to, MintTo};
 
     use super::*;
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        ctx.accounts.something.first = 0;
+        Ok(())
+    }
 
     pub fn add_movie_review(
         ctx: Context<AddMovieReview>,
@@ -78,6 +85,21 @@ pub mod hahatoco {
         Ok(())
     }
 }
+
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(
+        seeds = [&something.first.to_le_bytes()],
+        bump
+    )]
+    pub something: Account<'info, Something>,
+}
+
+#[account]
+pub struct Something {
+    pub first: u64,
+}
+
 
 #[derive(Accounts)]
 #[instruction(title: String, description: String, rating: u8)]
@@ -187,5 +209,5 @@ pub struct MovieAccountState {
 
 #[account]
 pub struct State {
-    pub x: u64,
+    pub x: BTreeMap<u8, u64>,
 }

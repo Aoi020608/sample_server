@@ -2,7 +2,7 @@
 members = [ 
     "client", 
     "programs/*"
-]
+, "tests"]
 resolver = "2"
 
 [profile.release]

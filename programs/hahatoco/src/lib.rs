@@ -13,7 +13,6 @@ pub mod hahatoco {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.something.first = 0;
         Ok(())
     }
 
@@ -82,19 +81,12 @@ pub mod hahatoco {
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(
-        seeds = [&something.first.to_le_bytes()],
-        bump
-    )]
-    pub something: Account<'info, Something>,
-}
+pub struct Initialize {}
 
 #[account]
 pub struct Something {
     pub first: u64,
 }
-
 
 #[derive(Accounts)]
 #[instruction(title: String, description: String, rating: u8)]
@@ -192,4 +184,3 @@ pub struct MovieAccountState {
     pub title: String,
     pub description: String,
 }
-

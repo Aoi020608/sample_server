@@ -16,6 +16,8 @@ cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "cargo test --lib -- --nocapture --include-ignored ::anchor && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 remove = "rm target/deploy/hahatoco-keypair.json"
 generate = "solana-keygen new -o target/deploy/hahatoco-keypair.json"
+hello = "echo hello; echo world"
+sample = "cargo test --lib -- --nocapture --include-ignored ::anchor && yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

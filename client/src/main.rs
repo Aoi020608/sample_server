@@ -69,7 +69,7 @@ pub fn main() {
                 &program_id,
             );
 
-            let (state_pda, _bump) = Pubkey::find_program_address(
+            let (_state_pda, _bump) = Pubkey::find_program_address(
                 &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
                 &program_id,
             );

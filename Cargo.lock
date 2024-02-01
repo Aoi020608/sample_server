@@ -5476,6 +5476,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-client",
  "hahatoco",
+ "shellexpand",
  "solana-program-test",
 ]
 

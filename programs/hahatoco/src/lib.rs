@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-declare_id!("7SQRQrtE8n1QTbkcw22GcW1rGpk9D1WQtTUWp2o7DaHJ");
+declare_id!("DjLzptXB2VJH9GTXacQHPApSBfUg72rvrGJaj4wnPjkA");
 
 #[program]
 pub mod hahatoco {
@@ -12,7 +12,7 @@ pub mod hahatoco {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
         Ok(())
     }
 

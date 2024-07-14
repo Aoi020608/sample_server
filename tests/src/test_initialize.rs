@@ -10,8 +10,9 @@ use anchor_client::{
 #[test]
 fn test_initialize() {
     let program_id = "DjLzptXB2VJH9GTXacQHPApSBfUg72rvrGJaj4wnPjkA";
-    let payer = read_keypair_file(&*shellexpand::tilde("~/.config/solana/id.json"))
-        .expect("requires a keypair file");
+    let anchor_wallet = std::env::var("ANCHOR_WALLET").expect("set ANCHOR_WALLET");
+    let payer = read_keypair_file(&anchor_wallet).expect("");
+
     let client = Client::new_with_options(Cluster::Localnet, &payer, CommitmentConfig::confirmed());
     let program_id = Pubkey::from_str(program_id).expect("parse program_id to Pubkey");
     let program = client.program(program_id).expect("");

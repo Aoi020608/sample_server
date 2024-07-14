@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hahatoco = { path = "../programs/hahatoco" }
 anchor-client = "0.29.0"
 solana-program-test = "1.18.1"
 shellexpand = "3.1.0"
+hahatoco = { version = "0.1.0", path = "../programs/hahatoco" }

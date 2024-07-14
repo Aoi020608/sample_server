@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anchor_client::{anchor_lang::system_program, solana_sdk::signature::Keypair, Client, Cluster};
 use clap::{Parser, Subcommand};
 use dotenv::dotenv;
-use hahatoco::{accounts as hahatoco_accounts, instruction as hahatoco_instruction, State};
+use hahatoco::{accounts as hahatoco_accounts, instruction as hahatoco_instruction};
 use solana_sdk::signature::read_keypair_file;
 use solana_sdk::signer::Signer;
 use solana_sdk::sysvar;
@@ -69,7 +69,7 @@ pub fn main() {
                 &program_id,
             );
 
-            let (state_pda, _bump) = Pubkey::find_program_address(
+            let (_state_pda, _bump) = Pubkey::find_program_address(
                 &[title.as_bytes().as_ref(), initializer.pubkey().as_ref()],
                 &program_id,
             );
@@ -85,7 +85,6 @@ pub fn main() {
                 .signer(&initializer)
                 .accounts(hahatoco_accounts::AddMovieReview {
                     movie_review: movie_review_pda,
-                    state: state_pda,
                     initializer: initializer.pubkey(),
                     system_program: system_program::ID,
                     token_program: spl_token::ID,
@@ -98,7 +97,6 @@ pub fn main() {
                     title: title.to_string().clone(),
                     description: description.to_string().clone(),
                     rating: *rating,
-                    input: State { x: 1 },
                 })
                 .send();
 

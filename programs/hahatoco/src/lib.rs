@@ -4,7 +4,7 @@ use anchor_spl::{
     token::{Mint, Token, TokenAccount},
 };
 
-declare_id!("7SQRQrtE8n1QTbkcw22GcW1rGpk9D1WQtTUWp2o7DaHJ");
+declare_id!("DjLzptXB2VJH9GTXacQHPApSBfUg72rvrGJaj4wnPjkA");
 
 #[program]
 pub mod hahatoco {
@@ -12,8 +12,7 @@ pub mod hahatoco {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.something.first = 0;
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
         Ok(())
     }
 
@@ -82,19 +81,12 @@ pub mod hahatoco {
 }
 
 #[derive(Accounts)]
-pub struct Initialize<'info> {
-    #[account(
-        seeds = [&something.first.to_le_bytes()],
-        bump
-    )]
-    pub something: Account<'info, Something>,
-}
+pub struct Initialize {}
 
 #[account]
 pub struct Something {
     pub first: u64,
 }
-
 
 #[derive(Accounts)]
 #[instruction(title: String, description: String, rating: u8)]
@@ -192,4 +184,3 @@ pub struct MovieAccountState {
     pub title: String,
     pub description: String,
 }
-
